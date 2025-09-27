@@ -1,0 +1,268 @@
+type: custom:vertical-stack-in-card
+cards:
+  - type: grid
+    square: false
+    columns: 2
+    cards:
+      - type: custom:mushroom-template-card
+        entity: sensor.temperature_terrace_temperature
+        primary: |
+          {{ states(entity) | round(1) }}°C 
+        secondary: >-
+          {% set s = states('weather.forecast_nuevo_valencia') | default('') |
+          lower %}
+                {% if not s %}
+                  {{ '' }}
+                {% else %}
+                  {% set map = {
+                    'clear-night': 'Clear',
+                    'lightning-rainy': 'Lightning Storm',
+                    'partlycloudy': 'Partly Cloudy',
+                    'snowy-rainy': 'Sleet',
+                    'windy-variant': 'Windy'
+                  } %}
+                  {% if s in map %}
+                    {{ map[s] }}
+                  {% else %}
+                    {% set t = s | replace('-', ' ') | replace('_', ' ') %}
+                    {{ t.split(' ') | map('capitalize') | join(' ') }}
+                  {% endif %}
+                {% endif %}
+        icon: >-
+          {% set weather = states('weather.forecast_nuevo_valencia') |
+          default('') | lower %}
+
+          {% if weather %} 
+            {% set map = {
+              'clear-night': 'night',
+              'partlycloudy': 'partly-cloudy',
+            } %}
+            {% if weather in map %}
+              mdi:weather-{{map[weather]}}
+            {% else %}
+              mdi:weather-{{weather}}
+            {% endif %}
+          {% else %}
+            {{ '' }}
+          {% endif %}
+        tap_action:
+          action: navigate
+          navigation_path: /dashboard-tablet2/weather
+        color: >
+          {% set temp = states('sensor.temperature_terrace_temperature') | float
+          %}
+
+          {% if temp < 15 %} #44C3A2
+
+          {% elif temp < 21 %} #4DD566
+
+          {% elif temp < 25 %} #8DE459
+
+          {% elif temp < 30 %} #c3ce32
+
+          {% elif temp < 35 %} #FABC7A    
+
+          {% else %} #FF8E93 {% endif %}
+        features_position: bottom
+        card_mod:
+          style: |
+            ha-card { 
+              background: none;
+              box-shadow: none;
+              border: none;
+              border-radius: 0px;  
+              margin: 10px;
+            }
+      - type: custom:mushroom-template-card
+        entity: sensor.temperature_display_temperature
+        primary: |
+          {{ states(entity) | round(1) }}°C 
+        secondary: Livingroom
+        icon: |
+          {% set hvac_mode = states('climate.thermostat_livingroom') %}
+          {% if hvac_mode == 'heat' %} mdi:fire
+          {% elif hvac_mode == 'off' %} mdi:fire-off
+          {% elif hvac_mode == 'fan_only' %} mdi:fan
+          {% else %} mdi:thermometer
+          {% endif %}
+        icon_color: |
+          {% set hvac_mode = states('climate.thermostat_livingroom') %}
+          {% if hvac_mode == 'heat' %} #FF8E93
+          {% else %}
+            {% set temp = states('sensor.temperature_display_temperature') | float %}
+            {% if temp < 18 %} #39406D
+            {% elif temp < 21 %} #3C547D
+            {% elif temp < 24 %} #3F6D8D
+            {% elif temp < 27 %} #428D9F
+            {% elif temp < 30 %} #43B1AD
+            {% else %} #44C3A2
+            {% endif %}
+          {% endif %}
+        tap_action:
+          action: more-info
+        fill_container: false
+        multiline_secondary: false
+        card_mod:
+          style: |
+            ha-card { 
+              background: none;
+              box-shadow: none;
+              border: none;
+              border-radius: 0px;  
+              margin: 10px;
+            }
+  - type: custom:config-template-card
+    entities:
+      - sensor.temperature_display_temperature
+      - sensor.temperature_terrace_temperature
+      - climate.thermostat_livingroom
+    variables:
+      - states['climate.thermostat_livingroom'].state
+      - states['sensor.temperature_display_temperature'].state
+      - states['sensor.temperature_terrace_temperature'].state
+    card:
+      type: custom:mini-graph-card
+      update_interval: 120
+      points_per_hour: 1
+      entities:
+        - entity: climate.thermostat_livingroom
+          attribute: temperature
+          name: Outside Temperature
+          color: "#77777711"
+          smoothing: false
+          y_axis: secondary
+        - entity: sensor.temperature_display_temperature
+          name: House Average Temperature
+          color: |-
+            ${vars[0] === 'heat' ? '#FF8E93' : 
+
+              (vars[1] < 18 ? '#39406D' :
+              (vars[1] < 21 ? '#3C547D' :
+              (vars[1] < 24 ? '#3F6D8D' :
+              (vars[1] < 27 ? '#428D9F' :
+              (vars[1] < 30 ? '#43B1AD' : '#44C3A2')))))}
+        - entity: sensor.temperature_terrace_temperature
+          name: Outdoor Temperature
+          color: |-
+            ${vars[2] < 15 ? '#44C3A2' :
+              (vars[2] < 21 ? '#4DD566' :        
+              (vars[2] < 25 ? '#8DE459' :
+              (vars[2] < 30 ? '#c3ce32' :
+              (vars[2] < 35 ? '#FABC7A' : '#FF8E93'))))}
+      hours_to_show: 24
+      line_width: 3
+      font_size: 50
+      height: 212
+      animate: false
+      show:
+        name: false
+        icon: false
+        state: false
+        legend: false
+        fill: fade
+        labels: true
+      card_mod:
+        style: |
+          ha-card { 
+            background: none;
+            box-shadow: none;
+            border: none;
+            border-radius: 0px; 
+            margin-bottom: 10px
+          }
+  - type: horizontal-stack
+    cards:
+      - features:
+          - type: custom:service-call
+            entries:
+              - type: spinbox
+                icon: mdi:thermometer
+                label: "{{ value }} {{ unit }}"
+                step: 0.5
+                debounceTime: 1000
+                range:
+                  - "{{ state_attr(config.entity, \"min_temp\") }}"
+                  - "{{ state_attr(config.entity, \"max_temp\") }}"
+                value_attribute: temperature
+                unit_of_measurement: °C
+                hold_action:
+                  action: repeat
+                entity_id: climate.thermostat_livingroom
+                styles: |-
+                  :host {
+                    --background: 
+                      {% set hvac_mode = states('climate.tado') %}
+                      {% if hvac_mode == 'heat' %} orange
+                      {% elif hvac_mode == 'off' %} white
+                      {% else %} grey
+                      {% endif %};
+                    
+                    flex-flow: row;
+                  }
+                tap_action:
+                  action: perform-action
+                  perform_action: climate.set_temperature
+                  target:
+                    entity_id: climate.thermostat_livingroom
+                  data:
+                    temperature: "{{ value }}"
+            styles: |-
+              :host {
+                flex-flow: row;
+              }
+        type: tile
+        features_position: bottom
+        vertical: false
+        entity: climate.thermostat_livingroom
+        hide_state: true
+        icon: ""
+        show_entity_picture: false
+        card_mod:
+          style: |
+            ha-card .content {
+              display: none !important;
+            }
+            ha-card {
+              background: none;
+              padding-top: 10px !important;
+              border: none;
+              box-shadow: none !important;
+            }
+      - type: custom:mushroom-climate-card
+        entity: climate.thermostat_livingroom
+        primary_info: none
+        secondary_info: none
+        icon_type: none
+        hvac_modes:
+          - heat
+          - "off"
+        card_mod:
+          style: |
+            ha-card { 
+              background: none;
+              border: none;
+              padding-top: 2px !important;
+              box-shadow: none;
+            }
+  - type: custom:hourly-weather
+    entity: weather.pirateweather
+    num_segments: "12"
+    label_spacing: "2"
+    colors:
+      clear-night: "#2e3440"
+      cloudy: "#4c566a"
+      partlycloudy: "#b2b7bf"
+      rainy: "#5e81ac"
+      sunny: "#ebcb8b"
+    icons: true
+    name: " "
+    round_temperatures: true
+    card_mod:
+      style: |
+        ha-card { 
+          margin-top: 7px;
+          background: none;
+          box-shadow: none;
+          border: none;
+          border-radius: 0px;  
+        }
