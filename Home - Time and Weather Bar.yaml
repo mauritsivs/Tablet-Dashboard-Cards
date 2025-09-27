@@ -1,0 +1,179 @@
+type: custom:layout-card
+layout_type: custom:grid-layout
+layout:
+  grid-template-columns: 25% 45% 30%
+  grid-template-rows: 100px
+  grid-template-areas: |
+    "time empty weather"
+cards:
+  - type: custom:button-card
+    name: |
+      [[[ 
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const d = new Date();
+        const dayName = days[d.getDay()];
+        let day = d.getDate();
+        const monthName = months[d.getMonth()];
+        const year = d.getFullYear();
+        if (day < 10) { day = '0' + day; }
+        return `${dayName}, ${day} ${monthName}`;
+      ]]]
+    label: |
+      [[[
+        var d = new Date();
+        var hours = d.getHours();
+        if (hours < 10) {hours = '0' + hours;}
+        var minutes = d.getMinutes();
+        if (minutes < 10) {minutes = '0' + minutes;}
+        return hours + ':' + minutes;
+      ]]]
+    show_label: true
+    styles:
+      grid:
+        - grid-template-areas: "\"l\" \"n\""
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr auto
+      card:
+        - background: none
+        - overflow: visible
+        - border: none
+        - box-shadow: none
+      name:
+        - justify-self: start
+        - font-size: 17px
+        - font-weight: 400
+        - margin-top: "-8px"
+      label:
+        - justify-self: start
+        - font-size: 56px
+        - font-weight: 600
+  - type: custom:mushroom-title-card
+    alignment: center
+    card_mod:
+      style: |
+        ha-card { 
+          background-color: none;
+          box-shadow: none;
+          border: none;
+          padding: 0px;
+        }
+  - type: custom:button-card
+    name: |
+      [[[
+            const s = (states['weather.forecast_nuevo'].state || '').toString().toLowerCase();
+            if (!s) return '';
+
+            const map = {
+              'clear-night': 'Clear',
+              'lightning-rainy': 'Lightning Storm',
+              'partlycloudy': 'Partly Cloudy',
+              'snowy-rainy': 'Sleet',
+              'windy-variant': 'Windy'
+            };
+
+            if (map[s]) return map[s];
+
+            // fallback: title-case a single word (or any remaining separator variants)
+            return s.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+          ]]]
+    label: |
+      [[[ 
+          const v = parseFloat(states['sensor.temperature_terrace_temperature'].state);
+          if (isNaN(v)) return '--' + '<span style="font-size:0.6em;vertical-align:super;">°C</span>';
+          return `${v.toFixed(1)}<span style="font-size:0.5em;vertical-align:super;">°C</span>`;
+        ]]]
+    show_label: true
+    custom_fields:
+      icon: |
+        [[[ 
+                var weather = (states['weather.forecast_nuevo'].state || '').toString().toLowerCase();
+                var sunState = (states['sun.sun'] && states['sun.sun'].state) ? states['sun.sun'].state.toString().toLowerCase() : '';
+                if (weather === 'partlycloudy' && sunState === 'below_horizon') {
+                  weather = 'partlycloudy-night';
+                }
+                return '<img src="/local/weathericons/' + weather + '.svg" style="width:90px;height:80px;">'
+              ]]]
+      rain: |
+        [[[
+          const r = parseFloat(states['sensor.rainfall_today'].state);
+          if (isNaN(r)) return '0 mm';
+          return `<ha-icon
+          icon="mdi:weather-pouring"
+          style="width: 14px; height: 14px;">
+          </ha-icon> ${r.toFixed(1)} mm`;
+        ]]]
+      inside: |
+        [[[
+          const r = parseFloat(states['sensor.temperature_display_temperature'].state);
+          if (isNaN(r)) return '0 mm';
+          return `<ha-icon
+          icon="mdi:home"
+          style="width: 14px; height: 14px;">
+          </ha-icon> ${r.toFixed(1)}<span style="font-size:0.6em;vertical-align:super;">°C</span>`;
+        ]]]
+      hum: |
+        [[[
+          const r = parseFloat(states['sensor.temperature_display_humidity'].state);
+          if (isNaN(r)) return '--';
+          return `<ha-icon
+          icon="mdi:home-percent"
+          style="width: 14px; height: 14px;">
+          </ha-icon> ${r.toFixed(0)}%`;
+        ]]]
+    styles:
+      grid:
+        - grid-template-areas: "'icon l rain' 'icon l hum' 'icon n inside'"
+        - grid-template-columns: 1fr 2fr 1fr
+        - grid-template-rows: 0.3fr 0.3fr 0.3fr
+      card:
+        - background: none
+        - overflow: visible
+        - border: none
+        - padding-right: 20px
+        - box-shadow: none
+      name:
+        - justify-self: center
+        - align-self: end
+        - font-size: 16px
+        - font-weight: 400
+        - margin-bottom: "-6px"
+      label:
+        - justify-self: center
+        - font-size: 55px
+        - font-weight: 300
+        - margin-top: 3px
+      custom_fields:
+        icon:
+          - justify-self: center
+          - align-self: end
+          - margin-bottom: "-9px"
+          - margin-top: 13px
+        rain:
+          - justify-self: end
+          - align-self: end
+          - font-size: 14px
+          - font-weight: 500
+          - margin-top: 0px
+        inside:
+          - justify-self: end
+          - align-self: end
+          - font-size: 14px
+          - font-weight: 500
+          - margin-bottom: "-5px"
+        hum:
+          - justify-self: end
+          - align-self: center
+          - font-size: 14px
+          - font-weight: 500
+          - margin-top: 10px
+grid_options:
+  columns: full
+card_mod:
+  style: |
+    ha-card {
+      border: none;
+      background-color: rgba(0,0,0,1);
+      border-radius: 0px;
+      //margin: -10px -0px -0px -32px
+    }
