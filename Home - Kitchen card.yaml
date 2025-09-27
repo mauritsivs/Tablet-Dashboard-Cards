@@ -1,0 +1,196 @@
+type: custom:button-card
+name: Kitchen
+icon: mdi:sofa-outline
+show_state: true
+show_icon: true
+show_entity_picture: false
+tap_action:
+  action: navigate
+  navigation_path: /dashboard-tablet2/rooms
+state_display: |
+  [[[
+    const temperature = states['sensor.temperature_display_temperature'] ? states['sensor.temperature_display_temperature'].state : null;
+    return temperature ? (parseFloat(temperature).toFixed(1) + "°C") : 'N/A';
+  ]]]
+custom_fields:
+  chip_container:
+    card:
+      type: custom:mushroom-chips-card
+      chips:
+        - type: template
+          entity: binary_sensor.fridgedoor_contact
+          content_info: none
+          icon: "{{ 'mdi:fridge-alert' if is_state(entity,  'on') else 'mdi:fridge'}}"
+          icon_color: "{{ 'red' if is_state(entity,  'on') }}"
+        - type: template
+          entity: binary_sensor.kitchen_doors_group
+          content_info: none
+          icon: >-
+            {{ 'mdi:window-open-variant' if is_state(entity, 'on') else
+            'mdi:window-closed-variant' }}
+          icon_color: "{{ 'blue' if is_state(entity,  'on') }}"
+        - type: template
+          entity: binary_sensor.kitchen_presence_any_presence
+          content_info: none
+          icon: >-
+            {{ 'mdi:motion-sensor' if is_state(entity, 'on') else
+            'mdi:motion-sensor-off' }}
+          icon_color: "{{ 'blue' if is_state(entity,  'on') }}"
+        - type: template
+          entity: lock.kitchen_door_lock
+          content_info: none
+          icon: >-
+            {{ 'mdi:lock' if is_state(entity, 'locked') else
+            'mdi:lock-open-variant' }}
+          icon_color: "{{ 'green' if is_state(entity,  'locked') else 'red'}}"
+  actions_container:
+    card:
+      type: vertical-stack
+      cards:
+        - type: horizontal-stack
+          cards:
+            - type: custom:bubble-card
+              card_type: button
+              button_type: switch
+              entity: switch.keuken_kookplaat_left
+              icon: phu:bulb-group-ceiling-flush-circular
+              scrolling_effect: false
+              show_name: false
+              name: spots
+              show_state: false
+              show_attribute: false
+              tap_action:
+                action: toggle
+              card_layout: normal
+              button_action: {}
+              modules:
+                - home-assistant-default
+            - type: custom:bubble-card
+              card_type: button
+              button_type: switch
+              entity: switch.keuken_kookplaat_right
+              icon: phu:bulb-group-ceiling-flush-circular
+              scrolling_effect: false
+              show_name: false
+              name: spots
+              show_state: false
+              show_attribute: false
+              tap_action:
+                action: toggle
+              card_layout: normal
+              button_action: {}
+              sub_button: []
+              modules:
+                - home-assistant-default
+            - type: custom:bubble-card
+              card_type: button
+              card_layout: normal
+              button_type: switch
+              entity: switch.keuken_koffie_center
+              show_name: false
+              show_state: false
+              icon: phu:wall-nyro
+              tap_action:
+                action: toggle
+              modules:
+                - home-assistant-default
+        - type: custom:entity-progress-card-template
+          entity: sensor.dishwasher_program_progress
+          icon: mdi:dishwasher
+          name: |
+            {% if states('sensor.dishwasher_power_state') == 'on' %}
+              {% set secs = (states('sensor.dishwasher_remaining_program_time') | float(0) * 3600) | int %}
+              {% set h = (secs // 3600) | int %}
+              {% set m = ((secs % 3600) // 60) | int %}
+              {{ "{:2d}:{:02d}".format(h, m) }}
+              {{ states('sensor.dishwasher_program_phase') }}
+            {% else %}
+              {{ 'Off' }}
+            {%  endif %}
+          hide:
+            - secondary_info
+          badge_icon: |
+            {% if states('sensor.dishwasher_power_state') == 'on' %}
+              mdi:water
+            {% else %}
+              none
+            {%  endif %}
+          badge_color: green
+          percent: "{{ states('sensor.dishwasher_program_progress') }}"
+          force_circular_background: true
+          color: |
+            {% if states('sensor.dishwasher_power_state') == 'on' %}
+              blue
+            {% else %}
+              grey
+            {%  endif %}
+          card_mod:
+            style: |
+              ha-card {
+                border: none;
+                height: 49px;
+                background: var(--card-background-color);
+                //padding: 0px 4px 0px 0px;
+                margin: 0px 0px -7px 0px;
+              }
+              .shape {
+                border: solid 1px var(--chip-border-color);
+                background: var(--chip-background);
+              }
+        - type: custom:mushroom-chips-card
+          chips: null
+styles:
+  grid:
+    - grid-template-areas: >-
+        "i n chip_container" "i s chip_container" "i actions_container
+        actions_container"
+    - grid-template-columns: 10px 1fr 1fr
+    - grid-template-rows: min-content
+  card:
+    - padding: 10px 10px 10px 10px
+    - background: var(--card-background-color)
+  custom_fields:
+    actions_container:
+      - justify-self: end
+      - align-self: end
+      - //background: rgba(90,90,90,0.1)
+      - border-radius: 10px
+      - padding: 5px
+      - width: 74%
+    chip_container:
+      - justify-self: end
+      - align-self: end
+      - background: none
+      - border-radius: 10px
+      - padding-right: 5px
+      - padding-bottom: 10px
+      - padding-top: 0px
+  img_cell:
+    - position: absolute
+    - width: 350px
+    - height: 350px
+    - max-height: none
+    - left: "-140px"
+    - bottom: "-80px"
+    - border-radius: 50%
+    - //background-image: |
+        [[[
+          return "url('" + hass.areas['kitchen'].picture + "') !important";
+        ]]]
+    - background-position: "-00px 55px;"
+    - background-repeat: no-repeat;
+    - background-size: 125%;
+    - opacity: 0.25
+    - margin-right: "-45px"
+  name:
+    - justify-self: start
+    - font-size: 19px
+    - font-weight: 600
+  state:
+    - justify-self: start
+    - align-self: start
+    - font-size: 12px
+    - font-weight: 500
+    - color: rgba(96,114,116,0.7)
+  icon:
+    - width: 0px
