@@ -1,0 +1,194 @@
+type: custom:button-card
+name: ImelBot
+entity: vacuum.imelbot
+show_state: true
+show_icon: false
+show_entity_picture: true
+custom_fields:
+  battery: |
+    [[[
+      const r = parseFloat(states['sensor.imelbot_battery'].state);
+      if (isNaN(r)) return '--';
+      return `<ha-icon
+      icon="mdi:battery-outline"
+      style="width: 14px; height: 14px;">
+      </ha-icon> ${r.toFixed(0)}%`;
+    ]]]
+  error: |
+    [[[
+          const s = (states['sensor.imelbot_error'].state || '').toString();
+          if (!s) return '--';
+          const map = {
+            '0': 'No Error',
+            '301': 'Water Needed',
+            '111': 'Bumper Stuck',
+            'unknown': 'Offline',
+          };
+          const text = map[s] || s;
+          return `<ha-icon icon="mdi:alert-outline" style="width: 14px; height: 14px;"></ha-icon> ${text}`;
+        ]]]
+  actions_container:
+    card:
+      type: vertical-stack
+      cards:
+        - type: custom:mushroom-chips-card
+          chips:
+            - type: action
+              icon: mdi:bed-empty
+              tap_action:
+                action: perform-action
+                perform_action: script.imelbot_clean_rooms
+                data:
+                  roomnr: 0
+            - type: action
+              icon: mdi:sofa
+              tap_action:
+                action: perform-action
+                perform_action: script.imelbot_clean_rooms
+                data:
+                  roomnr: 4
+            - type: action
+              icon: mdi:faucet-variant
+              tap_action:
+                action: perform-action
+                perform_action: script.imelbot_clean_rooms
+                data:
+                  roomnr: 5
+            - type: action
+              icon: mdi:shower
+              tap_action:
+                action: perform-action
+                perform_action: script.imelbot_clean_rooms
+                data:
+                  roomnr: 6
+          alignment: center
+          card_mod:
+            style: |
+              ha-card {
+                --chip-border-radius: 10px;
+              }
+        - type: custom:mushroom-chips-card
+          card_mod:
+            style: |
+              ha-card {
+                --chip-border-radius: 10px;
+              }
+          chips:
+            - type: template
+              icon: >-
+                {{ 'mdi:play' if is_state('vacuum.imelbot', 'docked') else
+                'mdi:pause' }}
+              card_mod:
+                style: |
+                  {% if is_state('vacuum.imelbot', 'cleaning') %}
+                    ha-card { 
+                      color: rgba(var(--default-green), 1)
+                    }
+                    ha-card { 
+                      --chip-background: rgba(var(--default-green), 0.2)
+                    }
+                  {% endif %}
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.start
+                target:
+                  entity_id: vacuum.imelbot
+                data: {}
+            - type: template
+              icon: mdi:stop
+              card_mod:
+                style: |
+                  {% if is_state('vacuum.imelbot', 'docked') %}
+                    ha-card { 
+                      color: rgba(var(--default-black), 0.2)
+                    } 
+                  {% endif %}
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.stop
+                target:
+                  entity_id: vacuum.imelbot
+                data: {}
+            - type: template
+              icon: mdi:home-import-outline
+              card_mod:
+                style: |
+                  {% if is_state('vacuum.imelbot', 'docked') %}
+                    ha-card { 
+                      color: rgba(var(--default-black), 0.2)
+                    } 
+                  {% endif %}
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.return_to_base
+                target:
+                  entity_id: vacuum.imelbot
+                data: {}
+            - type: template
+              icon: mdi:map-marker-radius-outline
+              card_mod:
+                style: |
+                  {% if is_state('vacuum.imelbot', 'docked') %}
+                    ha-card { 
+                      color: rgba(var(--default-black), 0.2)
+                    } 
+                  {% endif %}
+              tap_action:
+                action: perform-action
+                perform_action: vacuum.locate
+                target:
+                  entity_id: vacuum.imelbot
+                data: {}
+styles:
+  grid:
+    - grid-template-areas: "\"n battery\" \"s error\" \"i actions_container\""
+    - grid-template-columns: 1fr
+    - grid-template-rows: min-content min-content 90px
+  card:
+    - padding: 10px
+    - background: var(--card-background-color)
+  custom_fields:
+    error:
+      - justify-self: end
+      - align-self: start
+      - font-size: 14px
+      - font-weight: 600
+      - color: |
+          [[[ 
+            return (states['sensor.imelbot_error'] && states['sensor.imelbot_error'].state === '0')
+              ? 'rgba(90,90,90,0)'
+              : 'red';
+          ]]]
+    battery:
+      - justify-self: end
+      - font-size: 14px
+      - font-weight: 400
+    actions_container:
+      - background: rgba(90,90,90,0.1)
+      - border-radius: 10px
+      - padding: 5px
+      - align-self: end
+      - justify-self: end
+  name:
+    - justify-self: start
+    - font-size: 19px
+    - font-weight: 600
+  state:
+    - justify-self: start
+    - font-size: 12px
+    - font-weight: 500
+    - color: rgba(114,114,114,0.7)
+    - margin-bottom: 10px
+  img_cell:
+    - position: absolute
+    - height: 100px
+    - top: 50px
+    - left: "-110px"
+    - border-radius: null
+    - background-image: null
+    - opacity: null
+  icon:
+    - align-self: start
+    - justify-self: start
+    - width: 125px
+    - top: "-10px"
